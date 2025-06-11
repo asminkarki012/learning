@@ -21,8 +21,9 @@ class Jedi(Prototype):
         return f"name:{self.name} rank:{self.rank}"
 
 
-jedi1 = Jedi("Obi Wan Kenobi", "Jedi Master")
-jedi2 = jedi1.clone()
-jedi2.name = "Mace Windu"
-print(jedi1)
-print(jedi2)
+if __name__ == "__main__":
+    jedi1 = Jedi("Obi Wan Kenobi", "Jedi Master")
+    jedi2 = jedi1.clone()
+    jedi2.name = "Mace Windu"
+    print(jedi1)
+    print(jedi2)
