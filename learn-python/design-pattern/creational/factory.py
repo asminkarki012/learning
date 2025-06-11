@@ -1,5 +1,16 @@
 from abc import ABC, abstractmethod
 
+"""
+This script demonstrates the Factory Method design pattern using subatomic particles.
+
+- Particle is the abstract base class (Product).
+- Electron, Proton, and Neutron are concrete implementations (Concrete Products).
+- ParticleCreator is the abstract creator.
+- ElectronCreator, ProtonCreator, and NeutronCreator are concrete factories (Creators) that instantiate specific particles.
+
+The client code interacts only with the creator interface and does not depend on concrete classes directly.
+"""
+
 
 # Product Interface
 class Particle(ABC):
@@ -27,33 +38,33 @@ class Neutron(Particle):
 # Creator (Factory)
 class ParticleCreator(ABC):
     @abstractmethod
-    def create_particle(self, particle_type):
+    def create_particle(self):
         pass
 
 
-# Single Concrete Factory
-class ParticleFactory(ParticleCreator):
-    def create_particle(self, particle_type):
-        # only instance particle that are requested thus using lambda
-        particles = {
-            "electron": lambda: Electron(charge=-1, spin=0.5),
-            "proton": lambda: Proton(charge=+1, spin=0.5),
-            "neutron": lambda: Neutron(charge=0, spin=0.5),
-        }
-        try:
-            return particles[particle_type.lower()]()
-        except KeyError:
-            raise ValueError(f"Unknown particle type: {particle_type}")
+# Concrete Factories
+class ElectronCreator(ParticleCreator):
+    def create_particle(self):
+        return Electron(charge=-1, spin=0.5)
+
+
+class ProtonCreator(ParticleCreator):
+    def create_particle(self):
+        return Proton(charge=+1, spin=0.5)
+
+
+class NeutronCreator(ParticleCreator):
+    def create_particle(self):
+        return Neutron(charge=0, spin=0.5)
 
 
 # Client Code
-def client_code(creator: ParticleCreator, particle_type: str):
-    particle = creator.create_particle(particle_type)
+def client_code(creator: ParticleCreator):
+    particle = creator.create_particle()
     print(particle)
 
 
 if __name__ == "__main__":
-    factory = ParticleFactory()
-    client_code(factory, "electron")
-    client_code(factory, "proton")
-    client_code(factory, "neutron")
+    client_code(ElectronCreator())  # Electron(charge=-1, spin=0.5)
+    client_code(ProtonCreator())  # Proton(charge=1, spin=0.5)
+    client_code(NeutronCreator())  # Neutron(charge=0, spin=0.5)
