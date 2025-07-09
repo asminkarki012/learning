@@ -84,10 +84,10 @@ class Lunch {
 
     class LunchBuilder {
         <<abstract>>
-        +prepare_base()* LunchBuilder
-        +add_cheese()* LunchBuilder
-        +add_meat()* LunchBuilder
-        +add_toppings()* LunchBuilder
+        +prepare_base(base:str)* LunchBuilder
+        +add_cheese(cheese:str)* LunchBuilder
+        +add_meat(meat:str)* LunchBuilder
+        +add_toppings(topping:str)* LunchBuilder
         +get_lunch()* Lunch
     }
 
