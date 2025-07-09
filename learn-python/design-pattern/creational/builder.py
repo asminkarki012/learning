@@ -20,11 +20,11 @@ from abc import ABC, abstractmethod
 
 
 class Lunch:
-    def __init__(self, lunch_name):
+    def __init__(self, lunch_name: str):
         self.components = []
         self._lunch_name = lunch_name
 
-    def add_component(self, component):
+    def add_component(self, component: str):
         self.components.append(component)
 
     def __str__(self):
