@@ -88,8 +88,8 @@ class PizzaBuilder(LunchBuilder):
         self._lunch.components.append(meat)
         return self
 
-    def add_toppings(self, topping):
-        self._lunch.components.append(topping)
+    def add_toppings(self, toppings):
+        self._lunch.components.append(toppings)
         return self
 
     def get_lunch(self):
