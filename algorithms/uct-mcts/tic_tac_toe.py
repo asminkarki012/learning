@@ -28,7 +28,7 @@ class Tictactoe:
 
         self.board[move] = self.turn
 
-        if self.is_gameover():
+        if self.check_win():
             self.winner = self.turn
         else:
             self.turn = self.next_turn()
@@ -40,13 +40,8 @@ class Tictactoe:
     def next_turn(self):
         return self.O if self.turn == self.X else self.X
 
-    def is_gameover(self):
-        return (
-            self.is_row_over()
-            or self.is_col_over()
-            or self.is_diag_over()
-            or self.is_board_full()
-        )
+    def check_win(self):
+        return self.is_row_over() or self.is_col_over() or self.is_diag_over()
 
     def is_board_full(self):
         non_empty = [not self.board[i] == self.EMPTY for i in range(self.SIZE**2)]
@@ -183,3 +178,7 @@ class Tictactoe:
         new_game = copy.deepcopy(self)
         new_game.make_move(move)
         return new_game
+
+    def is_gameover(self):
+        # The game is over if someone won OR if there are no spots left.
+        return self.check_win() or self.is_board_full()
