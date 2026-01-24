@@ -7,8 +7,8 @@ class Tictactoe:
         self.X = "X"
         self.O = "O"
 
-        self.XValue = -1
-        self.OValue = 1
+        self.XValue = 1
+        self.OValue = -1
         self.EValue = 0
 
         self.winner = self.EMPTY
@@ -172,9 +172,9 @@ class Tictactoe:
         if not self.is_gameover():
             return 0
         if self.winner == self.X:
-            return -1
-        elif self.winner == self.O:
             return 1
+        elif self.winner == self.O:
+            return -1
         return 0
 
     # MCTS needs to explore many possible futures, so we return a new state
