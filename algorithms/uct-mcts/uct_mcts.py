@@ -18,15 +18,15 @@ class MCTSNode:
         self.visit_counts = 0
         self.results = defaultdict(int)  # store simulation outcome
         # initial root state no simulation
-        self.results[1] = 0  # X wins
-        self.results[-1] = 0  # X loses
+        self.results[1] = 0  # O wins
+        self.results[-1] = 0  # O loses
         self.untried_actions = (
             state.get_legal_moves()
         )  # should to fetch all the legals move from the game
 
     def reward(self):
-        wins = self.results[1]
-        loses = self.results[-1]
+        wins = self.results[-1]
+        loses = self.results[1]
         return wins - loses
 
     def visits(self):
