@@ -33,7 +33,6 @@ const matrixVectorMultiply = (matrix, vector) => {
 
   }
   return result
-
 }
 
 const dotProduct = (q, k) => {
@@ -56,10 +55,22 @@ const attentionScore = (q, k) => {
 
 const weightedSum = (weights, vectors) => {
   const output = []
-  for (let i = 0; i < weights.length; i++) {
-
+  //vectors[0].length -> length of each vector
+  const vectorColCount = vectors[0].length
+  for (let i = 0; i < vectorColCount; i++) {
+    let sum = 0
+    for (let j = 0; j < weights.length; j++) {
+      sum += weights[i] * vectors[i][j]
+    }
+    output.push(sum)
   }
   return output
+}
+
+const getShape = (arr) => {
+  if (!Array.isArray(arr)) return "not an array"
+  if (!Array.isArray(arr[0])) return [arr.length]  // 1D
+  return [arr.length, arr[0].length]  // 2D
 }
 
 
@@ -75,14 +86,24 @@ const Q_sat = matrixVectorMultiply(W_Q, embeddings["sat"])
 const K_sat = matrixVectorMultiply(W_K, embeddings["sat"])
 const V_sat = matrixVectorMultiply(W_V, embeddings["sat"])
 
-//finding attention score for the
+console.log("shape of V_the", getShape(V_the));
+
+
+// Compute how much "the" should attend to each word in the sentence
+// given by q and k when calculating attentionScore
 scores_the = []
 scores_the.push(attentionScore(Q_the, K_the))
 scores_the.push(attentionScore(Q_the, K_cat))
 scores_the.push(attentionScore(Q_the, K_sat))
 
+// calculating 
 const weights_the = softmax(scores_the);
+console.log('weights_the', getShape(weights_the))
 
+
+//in attention out_the is calculated a weighted sum of the values
+output_the = weightedSum(weights_the, [V_the, V_cat, V_sat])
+console.log('output_the', output_the)
 
 
 
