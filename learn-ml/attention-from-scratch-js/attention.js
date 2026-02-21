@@ -1,3 +1,7 @@
+import { weightedSum, matrixVectorMultiply, attentionScore, softmax } from "./utils.js"
+
+// ====manaual attention computation for understanding attention===
+/*
 const sentence = "the cat sat"
 
 const embeddings = {
@@ -24,61 +28,7 @@ const W_V = [
   [0.4, 0.3, 0.8]
 ]
 
-/*
- * utils functions
- */
-const matrixVectorMultiply = (matrix, vector) => {
-  const result = []
-  for (let i = 0; i < matrix.length; i++) {
-    result.push(dotProduct(matrix[i], vector))
 
-  }
-  return result
-}
-
-const dotProduct = (q, k) => {
-  let result = 0
-  // console.log("q,k", q, k)
-  for (let i = 0; i < q.length; i++) {
-    result += q[i] * k[i]
-  }
-  return result;
-}
-
-
-const softmax = (scores) => {
-  const sumExp = scores.reduce((total, num) => total + Math.exp(num), 0)
-  return scores.map((num) => Math.exp(num) / sumExp)
-}
-
-const attentionScore = (q, k) => {
-  // console.log('attentionsscore', q, k)
-  const d_k = q.length;
-  return dotProduct(q, k) / Math.sqrt(d_k)
-}
-
-const weightedSum = (weights, vectors) => {
-  const output = []
-  //vectors[0].length -> length of each vector
-  const vectorColCount = vectors[0].length
-  for (let i = 0; i < vectorColCount; i++) {
-    let sum = 0
-    for (let j = 0; j < weights.length; j++) {
-      sum += weights[i] * vectors[i][j]
-    }
-    output.push(sum)
-  }
-  return output
-}
-
-const getShape = (arr) => {
-  if (!Array.isArray(arr)) throw new Error("Not an Array")
-  if (!Array.isArray(arr[0])) return [arr.length]  // 1D
-  return [arr.length, arr[0].length]  // 2D
-}
-
-// manaual attention computation for understanding attention
-/*
 const Q_the = matrixVectorMultiply(W_Q, embeddings["the"])
 const K_the = matrixVectorMultiply(W_K, embeddings["the"])
 const V_the = matrixVectorMultiply(W_V, embeddings["the"])
@@ -121,6 +71,7 @@ const scores_sat = all_keys.map((key) => attentionScore(Q_sat, key))
 const weights_sat = softmax(scores_sat);
 const output_sat = weightedSum(weights_sat, all_values)
 console.log('weights sat', weights_sat)
+// ====================================================
 */
 
 
@@ -153,6 +104,7 @@ const selfAttention = (embeddings, W_Q, W_K, W_V) => {
   const outputs = queries.map((q) => computeAttention(q, keys, values))
   return outputs
 }
+
 // console.log('===full attention forward pass===')
 // console.log(selfAttention(embeddings, W_Q, W_K, W_V))
 
