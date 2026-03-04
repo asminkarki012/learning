@@ -34,11 +34,12 @@ const attentionScore = (q, k) => {
 const weightedSum = (weights, vectors) => {
   const output = []
   //vectors[0].length -> length of each vector
-  const vectorColCount = vectors[0].length
-  for (let i = 0; i < vectorColCount; i++) {
+  // i -> dimension, j-> token 
+  const dimCount = vectors[0].length
+  for (let dim = 0; dim < dimCount; dim++) {
     let sum = 0
-    for (let j = 0; j < weights.length; j++) {
-      sum += weights[i] * vectors[i][j]
+    for (let token = 0; token < weights.length; token++) {
+      sum += weights[token] * vectors[token][dim]
     }
     output.push(sum)
   }

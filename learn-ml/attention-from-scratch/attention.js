@@ -83,10 +83,10 @@ const computeQKV = (embeddings, W_Q, W_K, W_V) => {
   const k = []
   const v = []
 
-  Object.keys(embeddings).forEach((key) => {
-    q.push(matrixVectorMultiply(W_Q, embeddings[key]))
-    k.push(matrixVectorMultiply(W_K, embeddings[key]))
-    v.push(matrixVectorMultiply(W_V, embeddings[key]))
+  embeddings.forEach((embedding) => {
+    q.push(matrixVectorMultiply(W_Q, embedding))
+    k.push(matrixVectorMultiply(W_K, embedding))
+    v.push(matrixVectorMultiply(W_V, embedding))
   })
 
   return { queries: q, keys: k, values: v }
@@ -95,6 +95,7 @@ const computeQKV = (embeddings, W_Q, W_K, W_V) => {
 const computeAttention = (query, keys, values) => {
   const scores = keys.map((key) => attentionScore(query, key))
   const weight = softmax(scores)
+  console.log("soft maxwieghtsss",weight)
   const output = weightedSum(weight, values)
   return output
 }
