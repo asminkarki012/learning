@@ -4,7 +4,7 @@ import numpy as np
 # import graphviz
 from math import sqrt, log
 from collections import defaultdict
-from tic_tac_toe import Tictactoe
+from .tic_tac_toe import Tictactoe
 
 # UCT-MCTS Implementation for tic-tac-toe
 C_p = 1 / sqrt(2)  # EXPLORATION_CONSTANT from Bandit based Monte-Carlo Planning
