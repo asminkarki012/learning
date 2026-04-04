@@ -1,6 +1,7 @@
 from typing import Optional
 import numpy as np
-import graphviz
+
+# import graphviz
 from math import sqrt, log
 from collections import defaultdict
 from tic_tac_toe import Tictactoe
@@ -13,6 +14,7 @@ class MCTSNode:
     def __init__(self, state: Tictactoe, parent=None, parent_action=None):
         self.state = state
         self.parent = parent
+        self.player = state.turn
         self.parent_action = parent_action
         self.children: list[MCTSNode] = []
         self.visit_counts = 0
@@ -25,8 +27,12 @@ class MCTSNode:
         )  # should to fetch all the legals move from the game
 
     def reward(self):
-        wins = self.results[-1]
-        loses = self.results[1]
+        if self.player == self.state.X:
+            wins = self.results[1]
+            loses = self.results[-1]
+        else:
+            wins = self.results[-1]
+            loses = self.results[1]
         return wins - loses
 
     def visits(self):
@@ -99,31 +105,31 @@ class MCTSNode:
         best_child = self.best_child()
         return best_child.parent_action
 
-    def visualize_tree(self, filename=None, selected_node: Optional["MCTSNode"] = None):
-        dot = graphviz.Digraph()
-
-        def add_nodes(node, parent_id=None):
-            node_id = str(id(node))
-            label = f"Move: {node.parent_action}\nV: {node.visit_counts}\nR: {node.reward()}"
-
-            if node == selected_node:
-                dot.node(
-                    node_id,
-                    label,
-                    color="green",
-                    style="filled",
-                    fillcolor="lightgreen",
-                )
-            else:
-                dot.node(node_id, label)
-
-            if parent_id:
-                dot.edge(parent_id, node_id)
-
-            for child in node.children:
-                add_nodes(child, node_id)
-
-        add_nodes(self)
-        if filename:
-            dot.render(filename, view=True)
-        return dot
+    # def visualize_tree(self, filename=None, selected_node: Optional["MCTSNode"] = None):
+    #     dot = graphviz.Digraph()
+    #
+    #     def add_nodes(node, parent_id=None):
+    #         node_id = str(id(node))
+    #         label = f"Move: {node.parent_action}\nV: {node.visit_counts}\nR: {node.reward()}"
+    #
+    #         if node == selected_node:
+    #             dot.node(
+    #                 node_id,
+    #                 label,
+    #                 color="green",
+    #                 style="filled",
+    #                 fillcolor="lightgreen",
+    #             )
+    #         else:
+    #             dot.node(node_id, label)
+    #
+    #         if parent_id:
+    #             dot.edge(parent_id, node_id)
+    #
+    #         for child in node.children:
+    #             add_nodes(child, node_id)
+    #
+    #     add_nodes(self)
+    #     if filename:
+    #         dot.render(filename, view=True)
+    #     return dot
