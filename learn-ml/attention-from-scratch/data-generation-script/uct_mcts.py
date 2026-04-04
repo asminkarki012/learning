@@ -97,7 +97,7 @@ class MCTSNode:
         return current_node
 
     def best_action(self, simulations_number=2):
-        for i in range(simulations_number):
+        for _ in range(simulations_number):
             selected_node = self.tree_policy()
             reward = selected_node.simulation()
             selected_node.backpropagate(reward)

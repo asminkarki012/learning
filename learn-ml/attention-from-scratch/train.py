@@ -2,7 +2,7 @@ import os
 import json
 import torch
 import torch.nn as nn
-from attention import self_attention
+from attention import self_attention, positional_encoding
 
 TOKEN_TO_IDX = {"X": 0, "O": 1, "_": 2}
 RESULT_TO_IDX = {"X": 1, "O": -1, "_": 0}  # for game result
@@ -34,6 +34,7 @@ class TicTacToeModel(nn.Module):
 
     def forward(self, x):
         x = self.embeddings(x)
+        x = x + positional_encoding(x).to(x.dtype)
         print("embedding tensors", x.shape)
         x = torch.stack(self_attention(x, self.W_Q, self.W_K, self.W_V))
         print("after attention tensors shape", x.shape)
