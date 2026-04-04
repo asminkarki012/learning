@@ -3,7 +3,6 @@ from utils import (
     matrix_vector_multiply,
     attention_score,
     softmax,
-    get_shape,
 )
 import torch
 
@@ -21,36 +20,28 @@ def compute_qkv(embeddings, W_Q, W_K, W_V):
 
 def compute_attention(query, keys, values):
     scores = [attention_score(query, key) for key in keys]
-    weight = softmax(scores)
-    output = weighted_sum(weight, values)
-    return output
+    weights = softmax(scores)
+    output = weighted_sum(weights, values)
+    return (output, weights)
 
 
 def self_attention(embeddings, W_Q, W_K, W_V):
     queries, keys, values = compute_qkv(embeddings, W_Q, W_K, W_V)
-    outputs = [compute_attention(q, keys, values) for q in queries]
-    return outputs
+    results = [compute_attention(q, keys, values) for q in queries]
+    outputs = [r[0] for r in results]
+    weights = [r[1] for r in results]
+    return outputs, weights
 
 
-def postional_encoding(embeddings):
-    rows, cols = get_shape(embeddings)
-    positions = torch.arange(rows).unsqueeze(1).expand_as(embeddings)
-    dim_idx = torch.arange(cols).unsqueeze(0).expand_as(embeddings)
-    dim_size = cols
-    even_mask = dim_idx % 2 == 0
-
-    return torch.where(
-        even_mask,
-        even_pe(positions, dim_idx, dim_size),
-        odd_pe(positions, dim_idx, dim_size),
-    )
+def positional_encoding(embeddings):
+    seq_len, d_model = embeddings.shape
+    positions = torch.arange(seq_len).unsqueeze(1).expand_as(embeddings)
+    dim_idx = torch.arange(d_model).unsqueeze(0).expand_as(embeddings)
+    return compute_pe(positions, dim_idx, d_model)
 
 
-def odd_pe(pos, dim_idx, dim_size):
-    denominator = 10_000 ** (dim_idx / dim_size)
-    return torch.cos(pos / denominator)
-
-
-def even_pe(pos, dim_idx, dim_size):
-    denominator = 10_000 ** (dim_idx / dim_size)
-    return torch.sin(pos / denominator)
+def compute_pe(pos, dim_idx, d_model):
+    i = dim_idx // 2  # pair index: (sin, cos) share the same frequency
+    denominator = 10_000 ** (i / d_model)
+    angle = pos / denominator
+    return torch.where(dim_idx % 2 == 0, torch.sin(angle), torch.cos(angle))
