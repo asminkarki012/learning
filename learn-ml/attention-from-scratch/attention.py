@@ -25,15 +25,15 @@ def compute_attention(query, keys, values):
     return (output, weights)
 
 
-def self_attention(embeddings, W_Q, W_K, W_V):
+def self_attention(embeddings, W_Q, W_K, W_V) -> tuple[torch.Tensor, torch.Tensor]:
     queries, keys, values = compute_qkv(embeddings, W_Q, W_K, W_V)
     results = [compute_attention(q, keys, values) for q in queries]
-    outputs = [r[0] for r in results]
-    weights = [r[1] for r in results]
+    outputs = torch.stack([o for o, _ in results])
+    weights = torch.stack([w for _, w in results])
     return outputs, weights
 
 
-def positional_encoding(embeddings):
+def positional_encoding(embeddings) -> torch.Tensor:
     seq_len, d_model = embeddings.shape
     positions = torch.arange(seq_len).unsqueeze(1).expand_as(embeddings)
     dim_idx = torch.arange(d_model).unsqueeze(0).expand_as(embeddings)
