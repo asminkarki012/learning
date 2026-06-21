@@ -12,7 +12,30 @@ def run_mcts_vs_mcts(simulations=10):
         count += 1
         root = MCTSNode(state=game)
         best_move = root.best_action(simulations_number=simulations)
-        training_data.append({"board": deepcopy(game.board), "move": best_move})
+        # calculate pie as
+        # pie = root.visit_counts / sum (child.visit for child in root.children)
+        total_visits = sum(child.visit_counts for child in root.children)
+
+        pi = {
+            child.parent_action: child.visit_counts / total_visits
+            for child in root.children
+        }
+
+        pi_value: list[float] = [0] * 9
+        for move, prob in pi.items():
+            if move is not None:
+                pi_value[move] = prob
+
+        player_turn = root.player
+
+        training_data.append(
+            {
+                "board": deepcopy(game.board),
+                "move": best_move,
+                "pi": pi_value,
+                "turn": player_turn,
+            }
+        )
         game.make_move(best_move)
 
     for entry in training_data:
@@ -25,12 +48,14 @@ def generate_training_data(
     num_games=100,
     simulations=10,
 ):
+    # 2d array each game are stored in batch wise
     all_data = []
     results = {"X": 0, "O": 0, "draw": 0}
 
     for _ in range(num_games):
         training_data, winner = run_mcts_vs_mcts(simulations)
-        all_data.extend(training_data)
+
+        all_data.append(training_data)
 
         if winner in ["X", "O"]:
             results[winner] += 1
@@ -48,4 +73,4 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    generate_training_data("mcts_training_data.json",1000,20)
+    generate_training_data("mcts_training_data.json", 1000, 20)
