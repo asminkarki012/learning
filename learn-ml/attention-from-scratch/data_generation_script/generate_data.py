@@ -73,4 +73,4 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    generate_training_data("mcts_training_data.json", 1000, 20)
+    generate_training_data("mcts_training_data_alphazero.json", 1000, 20)
