@@ -5,6 +5,7 @@ from utils import (
     softmax,
 )
 import torch
+import math
 
 
 def compute_qkv(embeddings, W_Q, W_K, W_V):
@@ -33,10 +34,26 @@ def self_attention(embeddings, W_Q, W_K, W_V) -> tuple[torch.Tensor, torch.Tenso
     return outputs, weights
 
 
+def self_attention_torch(q, k, v) -> tuple[torch.Tensor, torch.Tensor]:
+    d_k = q.shape[-1]
+    scores = (q @ k.transpose(-2, -1)) / math.sqrt(d_k)
+    weights = torch.softmax(scores, dim=-1)  # each row sums to 1
+    outputs = weights @ v  # [9, 16] — all context vectors at once
+    return outputs, weights
+
+
 def positional_encoding(embeddings) -> torch.Tensor:
     seq_len, d_model = embeddings.shape
-    positions = torch.arange(seq_len).unsqueeze(1).expand_as(embeddings)
-    dim_idx = torch.arange(d_model).unsqueeze(0).expand_as(embeddings)
+    positions = (
+        torch.arange(seq_len, device=embeddings.device)
+        .unsqueeze(1)
+        .expand_as(embeddings)
+    )
+    dim_idx = (
+        torch.arange(d_model, device=embeddings.device)
+        .unsqueeze(0)
+        .expand_as(embeddings)
+    )
     return compute_pe(positions, dim_idx, d_model)
 
 
