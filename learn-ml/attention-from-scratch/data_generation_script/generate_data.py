@@ -1,10 +1,11 @@
-from tic_tac_toe import Tictactoe
-from uct_mcts import MCTSNode
+from data_generation_script.tic_tac_toe import Tictactoe
+from data_generation_script.uct_mcts import MCTSNode
 from copy import deepcopy
 import json
+import random
 
 
-def run_mcts_vs_mcts(simulations=10):
+def run_mcts_vs_mcts(simulations=10, temperature_moves=2):
     game = Tictactoe()
     training_data = []
     count = 0
@@ -13,7 +14,7 @@ def run_mcts_vs_mcts(simulations=10):
         root = MCTSNode(state=game)
         best_move = root.best_action(simulations_number=simulations)
         # calculate pie as
-        # pie = root.visit_counts / sum (child.visit for child in root.children)
+        # pi = root.visit_counts / sum (child.visit for child in root.children)
         total_visits = sum(child.visit_counts for child in root.children)
 
         pi = {
@@ -27,6 +28,13 @@ def run_mcts_vs_mcts(simulations=10):
                 pi_value[move] = prob
 
         player_turn = root.player
+
+        # if count <= temperature_moves:
+        #     best_move = random.choices(range(9), weights=pi_value)[0]
+        # else:
+            # best_move = pi_value.index(max(pi_value))
+            # best_move =
+            #pass
 
         training_data.append(
             {
@@ -73,4 +81,8 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    generate_training_data("mcts_training_data_alphazero.json", 1000, 20)
+    generate_training_data(
+        "./data_generation_script/mcts_training_with_temperature_moves_with_mcts_best_action.json",
+        2000,
+        200,
+    )
