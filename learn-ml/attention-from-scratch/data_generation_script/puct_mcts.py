@@ -1,4 +1,5 @@
 from typing import Optional
+from matplotlib.pylab import dirichlet
 import numpy as np
 
 # import graphviz
@@ -8,7 +9,7 @@ from data_generation_script.tic_tac_toe import Tictactoe
 import torch
 
 # UCT-MCTS Implementation for tic-tac-toe
-C_puct = 1 / sqrt(2)  # EXPLORATION_CONSTANT from Bandit based Monte-Carlo Planning
+C_puct = 2.0  # EXPLORATION_CONSTANT from Bandit based Monte-Carlo Planning
 
 
 TOKEN_TO_IDX = {"X": 0, "O": 1, "_": 2}
@@ -16,6 +17,8 @@ RESULT_TO_IDX = {"X": 1, "O": -1, "_": 0}  # for game result
 X = "X"
 O = "O"
 EMPTY = "_"
+
+EPSILON = 0.25
 
 
 class PUCTNode:
@@ -113,13 +116,36 @@ class PUCTNode:
             current_node = current_node.best_child()
         return current_node
 
-    def best_action(self, simulations_number=2):
-        for _ in range(simulations_number):
+    def most_visited_child(self) -> "PUCTNode":
+        return max(self.children, key=lambda child: child.visits())
+
+    def best_action(self, simulations_number=2, is_training=False):
+        for sim_idx in range(simulations_number):
             selected_node = self.tree_policy()
             reward = selected_node.evaluate()
             selected_node.backpropagate(reward)
+            # add dirichlet noise that only affects the root node
+            # after children have been expanded
+            if sim_idx == 0 and is_training:
+                num_legal_moves = len(self.children)
+                # concentration parameters given as 10/legal_moves
+                # scaled inversely with number of moves
+                alpha = torch.full((num_legal_moves,), 10 / num_legal_moves)
+                dirichlet_noise = torch.distributions.dirichlet.Dirichlet(
+                    alpha
+                ).sample()
 
-        best_child = self.best_child()
+                # print("before:", [c.prior_prob for c in self.children])
+
+                for child_idx in range(num_legal_moves):
+                    prior_prob = (1 - EPSILON) * self.children[
+                        child_idx
+                    ].prior_prob + EPSILON * dirichlet_noise[child_idx]
+                    self.children[child_idx].prior_prob = prior_prob.item()
+
+                # print("after:", [c.prior_prob for c in self.children])
+
+        best_child = self.most_visited_child()
         return best_child.parent_action
 
     # def visualize_tree(self, filename=None, selected_node: Optional["MCTSNode"] = None):
