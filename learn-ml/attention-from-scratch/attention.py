@@ -43,15 +43,17 @@ def self_attention_torch(q, k, v) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 def positional_encoding(embeddings) -> torch.Tensor:
-    seq_len, d_model = embeddings.shape
+    batch, seq_len, d_model = embeddings.shape
     positions = (
         torch.arange(seq_len, device=embeddings.device)
-        .unsqueeze(1)
+        .unsqueeze(0)
+        .unsqueeze(2)
         .expand_as(embeddings)
     )
     dim_idx = (
         torch.arange(d_model, device=embeddings.device)
         .unsqueeze(0)
+        .unsqueeze(1)
         .expand_as(embeddings)
     )
     return compute_pe(positions, dim_idx, d_model)

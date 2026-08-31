@@ -83,9 +83,7 @@ class PUCTNode:
         if self.is_terminal_node():
             result = self.state.game_result()
             # because right now ttt is only from perspective of X so need to flip
-            if self.player == X:
-                return result
-            return -result
+            return result if self.player == X else -result
 
         return self.value
 
