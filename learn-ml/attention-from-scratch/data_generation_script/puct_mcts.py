@@ -46,15 +46,22 @@ class PUCTNode:
         return self.visit_counts
 
     def expand(self):
-        game_states = torch.tensor([(TOKEN_TO_IDX[move]) for move in self.state.board])
 
-        log_probs, value, _ = self.model(game_states)
+        model_device = next(self.model.parameters()).device
+        game_states = torch.tensor(
+            [(TOKEN_TO_IDX[move]) for move in self.state.board], device=model_device
+        )
+
+        # Add batch dimension because the model expects input shaped [batch, seq_len].
+        # PUCT evaluates one board at a time, so batch size is 1 here.
+        log_probs, value, _ = self.model(game_states.unsqueeze(0))
 
         legal_moves = self.state.get_legal_moves()
         self.value = value.item()
 
         for action in legal_moves:
-            prior_prob = torch.exp(log_probs[action]).item()
+            # Remove the batch dimension; PUCT works with one board's 9 move probabilities.
+            prior_prob = torch.exp(log_probs[0, action]).item()
             next_state = self.state.next_state(action)
             child_node = PUCTNode(
                 next_state,
