@@ -25,7 +25,7 @@ class PUCTNode:
     def __init__(
         self,
         state: Tictactoe,
-        model,
+        model,  # this model should be in model.eval()
         parent=None,
         parent_action=None,
         value=0.0,
@@ -54,14 +54,25 @@ class PUCTNode:
 
         # Add batch dimension because the model expects input shaped [batch, seq_len].
         # PUCT evaluates one board at a time, so batch size is 1 here.
-        log_probs, value, _ = self.model(game_states.unsqueeze(0))
+        # since the model should be in evaluation mode backprop, batchnorm are off for eval mode
+        with torch.no_grad():
+            log_probs, value, _ = self.model(game_states.unsqueeze(0))
 
         legal_moves = self.state.get_legal_moves()
+        legal_log_probs = log_probs[0, legal_moves]
+        legal_probs = torch.exp(legal_log_probs)
+        legal_probs = legal_probs / (legal_probs.sum() + 1e-8)
         self.value = value.item()
 
-        for action in legal_moves:
+        # make sure legal moves are properly normalized assert that value
+        assert torch.isclose(legal_probs.sum(), torch.tensor(1.0)), (
+            f"Probabilities sum to {legal_probs.sum()}, expected 1.0!"
+        )
+
+        # legal_probs[idx] is the renormalized prior for legal_moves[idx]
+        for idx, action in enumerate(legal_moves):
             # Remove the batch dimension; PUCT works with one board's 9 move probabilities.
-            prior_prob = torch.exp(log_probs[0, action]).item()
+            prior_prob = legal_probs[idx].item()
             next_state = self.state.next_state(action)
             child_node = PUCTNode(
                 next_state,
