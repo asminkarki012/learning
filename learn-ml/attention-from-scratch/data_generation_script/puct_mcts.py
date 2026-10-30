@@ -1,12 +1,11 @@
-from typing import Optional
-from matplotlib.pylab import dirichlet
-import numpy as np
+import random
 
 # import graphviz
-from math import sqrt, log
-from collections import defaultdict
-from data_generation_script.tic_tac_toe import Tictactoe
+from math import sqrt
+
+import numpy as np
 import torch
+from data_generation_script.tic_tac_toe import Tictactoe
 
 # UCT-MCTS Implementation for tic-tac-toe
 C_puct = 2.0  # EXPLORATION_CONSTANT from Bandit based Monte-Carlo Planning
@@ -19,6 +18,9 @@ O = "O"
 EMPTY = "_"
 
 EPSILON = 0.25
+
+# higher value means lower uneven noise and vice versa
+DIRICHLET_TOTAL_CONCENTRATION = 10.0
 
 
 class PUCTNode:
@@ -92,7 +94,9 @@ class PUCTNode:
 
         # when traversing upward for each turn need to flip the perspective
         if self.parent:
-            self.parent.backpropagate(-result)
+            self.parent.backpropagate(
+                -result if self.player != self.parent.player else result
+            )
 
     def is_fully_expanded(self):
         return len(self.children) > 0
@@ -117,7 +121,8 @@ class PUCTNode:
         assert child.parent is not None
         N = child.parent.visits()
 
-        Q = W / n if n != 0 else 0  # avg reward
+        sign = -1 if child.player != self.player else 1
+        Q = sign * W / n if n != 0 else 0  # avg reward
         U = C_puct * P * (sqrt(N) / (1 + n))
         puct_score = Q + U
         return puct_score
@@ -135,41 +140,88 @@ class PUCTNode:
     def most_visited_child(self) -> "PUCTNode":
         return max(self.children, key=lambda child: child.visits())
 
-    def best_action(self, simulations_number=2, is_training=False):
+    def total_child_visits(self) -> int:
+        return sum(child.visits() for child in self.children)
+
+    def calculate_pi(self):
+        total_child_visits = self.total_child_visits()
+
+        if total_child_visits == 0:
+            raise ValueError(
+                "cannot calculate policy distribution without any child visit"
+            )
+
+        pi = {
+            child.parent_action: (child.visit_counts / total_child_visits)
+            for child in self.children
+        }
+
+        assert np.isclose(sum(pi.values()), 1.0), (
+            f"Policy probabilities must sum to 1. Got {sum(pi.values())}"
+        )
+
+        # for all tic tac toe action eg. for size 3 = 9 actions
+        total_actions = self.state.SIZE**2
+        pi_value = [0.0] * total_actions
+        for move, prob in pi.items():
+            if move is not None:
+                pi_value[move] = prob
+
+        return pi_value
+
+    def add_dirichlet_noise(self):
+        legal_moves_count = len(self.children)
+        # concentration parameters given as 10/legal_moves
+        # scaled inversely with number of moves
+        alpha = torch.full(
+            (legal_moves_count,),
+            DIRICHLET_TOTAL_CONCENTRATION / legal_moves_count,
+        )
+        dirichlet_noise = torch.distributions.dirichlet.Dirichlet(alpha).sample()
+
+        for child_idx in range(legal_moves_count):
+            prior_prob = (1 - EPSILON) * self.children[
+                child_idx
+            ].prior_prob + EPSILON * dirichlet_noise[child_idx]
+            self.children[child_idx].prior_prob = prior_prob.item()
+
+    def best_action(self, simulations_number=10, is_training=False, move_count=0):
         for sim_idx in range(simulations_number):
+            if not self.children and not self.is_terminal_node():
+                self.expand()
+
+            # accn to paper dirichlet noise is added after root expand for first sim
+            # This helps the search explore different moves.
+            if sim_idx == 0 and is_training and self.children:
+                self.add_dirichlet_noise()
+
             selected_node = self.tree_policy()
             reward = selected_node.evaluate()
             selected_node.backpropagate(reward)
-            # add dirichlet noise that only affects the root node
-            # after children have been expanded
-            if sim_idx == 0 and is_training:
-                num_legal_moves = len(self.children)
-                # concentration parameters given as 10/legal_moves
-                # scaled inversely with number of moves
-                alpha = torch.full((num_legal_moves,), 10 / num_legal_moves)
-                dirichlet_noise = torch.distributions.dirichlet.Dirichlet(
-                    alpha
-                ).sample()
 
-                # print("before:", [c.prior_prob for c in self.children])
+        pi = self.calculate_pi()
 
-                for child_idx in range(num_legal_moves):
-                    prior_prob = (1 - EPSILON) * self.children[
-                        child_idx
-                    ].prior_prob + EPSILON * dirichlet_noise[child_idx]
-                    self.children[child_idx].prior_prob = prior_prob.item()
+        if is_training and move_count <= 2:
+            best_action = np.random.choice(len(pi), p=np.array(pi))
+        else:
+            best_action = pi.index(max(pi))
 
-                # print("after:", [c.prior_prob for c in self.children])
+        print("parent action", self.most_visited_child().parent_action)
 
-        best_child = self.most_visited_child()
-        return best_child.parent_action
+        return best_action, pi
 
-    # def visualize_tree(self, filename=None, selected_node: Optional["MCTSNode"] = None):
+    # def visualize_tree(self, filename=None, selected_node: Optional["PUCTNode"] = None):
     #     dot = graphviz.Digraph()
     #
     #     def add_nodes(node, parent_id=None):
     #         node_id = str(id(node))
     #         label = f"Move: {node.parent_action}\nV: {node.visit_counts}\nR: {node.reward()}"
+    #     label = (
+    #     f"Move: {node.parent_action} (Player: {node.state.turn})\n"
+    #     f"N: {node.visits_count} | P: {node.prior_prob:.2f}\n"
+    #     f"W: {node.W:.2f} | Q: {node.Q:.2f}\n"
+    #     f"PUCT: {node.puct_score:.2f}"
+    # )
     #
     #         if node == selected_node:
     #             dot.node(

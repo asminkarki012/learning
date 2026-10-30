@@ -44,14 +44,12 @@ class Tictactoe:
         return self.is_row_over() or self.is_col_over() or self.is_diag_over()
 
     def is_board_full(self):
-        non_empty = [not self.board[i] == self.EMPTY for i in range(self.SIZE**2)]
+        non_empty = [self.board[i] != self.EMPTY for i in range(self.SIZE**2)]
 
-        if all(non_empty):
-            return True
-        return False
+        return bool(all(non_empty))
 
     def is_valid_move(self, move):
-        return move < self.SIZE**2 and self.board[move] == self.EMPTY
+        return 0 <= move < self.SIZE**2 and self.board[move] == self.EMPTY
 
     def reset(self):
         self.turn = self.X
@@ -66,7 +64,7 @@ class Tictactoe:
                 for j in range(i, (i + self.SIZE - 1))
             ]
 
-            if all(same) and not self.board[i] == self.EMPTY:
+            if all(same) and self.board[i] != self.EMPTY:
                 return True
         return False
 
@@ -77,7 +75,7 @@ class Tictactoe:
                 for j in range(i, (self.SIZE**2 - self.SIZE), self.SIZE)
             ]
 
-            if all(same) and not self.board[i] == self.EMPTY:
+            if all(same) and self.board[i] != self.EMPTY:
                 return True
 
         return False
@@ -89,7 +87,7 @@ class Tictactoe:
             for i in range(increment, (self.SIZE**2 - 2 * increment), increment)
         ]
 
-        if all(same) and not self.board[increment] == self.EMPTY:
+        if all(same) and self.board[increment] != self.EMPTY:
             return True
 
         increment = self.SIZE + 1
@@ -98,16 +96,13 @@ class Tictactoe:
             for i in range(0, (self.SIZE**2 - increment), increment)
         ]
 
-        if all(same) and not self.board[increment] == self.EMPTY:
-            return True
-
-        return False
+        return bool(all(same) and self.board[increment] != self.EMPTY)
 
     def print_board(self):
         for i in range(self.SIZE**2):
-            if i % self.SIZE == 0 and not i == 0:
+            if i % self.SIZE == 0 and i != 0:
                 print()
-            if not i % self.SIZE == 0:
+            if i % self.SIZE != 0:
                 print("|", end="")
             print(self.board[i], end="")
         print()
