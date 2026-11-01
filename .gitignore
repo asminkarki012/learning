@@ -14,3 +14,7 @@ target/
 
 
 .virtual_documents/
+
+
+*.mp3
+*.apkg
